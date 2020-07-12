@@ -10,7 +10,12 @@ from graphics import remove_background
 
 from globals import WIDTH, HEIGHT
 
-screen_is_visible = False
+state = {
+    "virtual_background": True,
+    "screen_is_visible": False,
+    "presenter_large": False,
+}
+
 background = cv2.imread("assets/background.jpg")
 background_scaled = cv2.resize(background, (WIDTH, HEIGHT))
 
@@ -19,7 +24,7 @@ class Thread(QThread):
     changePixmap = pyqtSignal(QImage)
 
     def run(self):
-        global screen_is_visible
+        global state
         cap = cv2.VideoCapture("/dev/video0")
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
@@ -29,16 +34,13 @@ class Thread(QThread):
             ret, frame = cap.read()
 
             if ret:
-                print(screen_is_visible)
                 # remove background
-                cropped = remove_background(
-                    cap, background_scaled, frame, screen_is_visible
-                )
+                cropped = remove_background(cap, background_scaled, frame, state)
 
-                rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                rgbImage = cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB)
 
                 # channel to video output device
-                camera.schedule_frame(rgbImage)
+                # camera.schedule_frame(rgbImage)
 
                 # https://stackoverflow.com/a/55468544/6622587
                 h, w, ch = rgbImage.shape
@@ -54,23 +56,39 @@ class App(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.setFixedSize(self.size())
 
-    def on_click(self):
-        global screen_is_visible
-        screen_is_visible = not screen_is_visible
+    def toggle_virtual_background(self):
+        global state
+        state["virtual_background"] = not state["virtual_background"]
+
+    def toggle_screen(self):
+        global state
+        state["screen_is_visible"] = not state["screen_is_visible"]
+
+    def toggle_layout(self):
+        global state
+        state["presenter_large"] = not state["presenter_large"]
 
     def setImage(self, image):
         self.label.setPixmap(QPixmap.fromImage(image))
 
     def initUI(self):
-        self.resize(WIDTH + 80, HEIGHT)
+        self.resize(WIDTH + 120, HEIGHT)
         self.label = QLabel(self)
         self.label.resize(WIDTH, HEIGHT)
 
-        button = QPushButton("PyQt5 button", self)
-        button.setToolTip("This is an example button")
-        button.move(WIDTH, 0)
-        button.clicked.connect(self.on_click)
+        toggle_screen = QPushButton("Screen", self)
+        toggle_screen.setGeometry(WIDTH, 0, 120, 50)
+        toggle_screen.clicked.connect(self.toggle_screen)
+
+        toggle_layout = QPushButton("Layout", self)
+        toggle_layout.setGeometry(WIDTH, 50, 120, 50)
+        toggle_layout.clicked.connect(self.toggle_layout)
+
+        toggle_layout = QPushButton("Background", self)
+        toggle_layout.setGeometry(WIDTH, 100, 120, 50)
+        toggle_layout.clicked.connect(self.toggle_virtual_background)
 
         th = Thread(self)
         th.changePixmap.connect(self.setImage)

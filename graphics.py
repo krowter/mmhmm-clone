@@ -43,24 +43,37 @@ def shift_image(img, dx, dy):
     return img
 
 
-def overlay_screen(frame):
+def overlay_screen(frame, presenter_large):
     overlaid = copy.deepcopy(frame)
-    screen = ImageGrab.grab(bbox=(0, 200, 400, 440))
+    (width, height) = (400, 440) if presenter_large else (600, 640)
+    screen = ImageGrab.grab(bbox=(0, 200, width, height))
     screen_np = np.array(screen)
     screen_img = cv2.cvtColor(screen_np, cv2.COLOR_BGR2RGB)
-    overlaid[0:240, 0:400] = screen_img
+    overlaid[0 : height - 200, 0:width] = screen_img
 
     return overlaid
 
 
-def remove_background(cap, background_scaled, frame, screen_is_visible):
+def remove_background(cap, background_scaled, frame, state):
+    if not state["virtual_background"]:
+        return (
+            overlay_screen(frame, state["presenter_large"])
+            if state["screen_is_visible"]
+            else frame
+        )
+
+    background = (
+        overlay_screen(background_scaled, state["presenter_large"])
+        if state["screen_is_visible"]
+        else background_scaled
+    )
+
     # fetch the mask with retries (the app needs to warmup and we're lazy)
     # e v e n t u a l l y c o n s i s t e n t
-
-    print(screen_is_visible)
-    background = (
-        overlay_screen(background_scaled) if screen_is_visible else background_scaled
-    )
+    if not state["presenter_large"]:
+        small_frame = cv2.resize(copy.deepcopy(frame), (320, 240))
+        frame = np.ones((HEIGHT, WIDTH, 3), dtype="uint8")
+        frame[240:480, 320:640] = small_frame
 
     mask = None
     while mask is None:
@@ -76,5 +89,6 @@ def remove_background(cap, background_scaled, frame, screen_is_visible):
     inv_mask = 1 - mask
     for c in range(frame.shape[2]):
         frame[:, :, c] = frame[:, :, c] * mask + background[:, :, c] * inv_mask
+
     return frame
 
