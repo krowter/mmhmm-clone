@@ -1,7 +1,9 @@
+require("dotenv").config();
 // const tf = require("@tensorflow/tfjs-node");
 const tf = require("@tensorflow/tfjs-node-gpu");
 const bodyPix = require("@tensorflow-models/body-pix");
 const http = require("http");
+const PORT = process.env.PORT;
 
 (async () => {
   const net = await bodyPix.load({
@@ -10,11 +12,6 @@ const http = require("http");
     multiplier: 0.75,
     quantBytes: 2,
   });
-  // const net = await bodyPix.load({
-  //   architecture: "ResNet50",
-  //   outputStride: 32,
-  //   quantBytes: 2,
-  // });
   const server = http.createServer();
   server.on("request", async (req, res) => {
     try {
@@ -31,7 +28,6 @@ const http = require("http");
         });
         res.writeHead(200, { "Content-Type": "application/octet-stream" });
         res.write(Buffer.from(segmentation.data));
-        // res.write(Buffer.from(segmentation.data));
         res.end();
         tf.dispose(image);
       });
@@ -39,5 +35,5 @@ const http = require("http");
       console.log(err);
     }
   });
-  server.listen(9000);
+  server.listen(PORT);
 })();

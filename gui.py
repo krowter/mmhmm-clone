@@ -16,9 +16,8 @@ state = {
     "presenter_large": False,
 }
 
-background = cv2.imread("assets/background.jpg")
+background = cv2.imread("assets/sebastian-kurpiel-R7qWs39obtk-unsplash.jpg")
 background_scaled = cv2.resize(background, (WIDTH, HEIGHT))
-
 
 class Thread(QThread):
     changePixmap = pyqtSignal(QImage)
@@ -40,15 +39,14 @@ class Thread(QThread):
                 rgbImage = cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB)
 
                 # channel to video output device
-                # camera.schedule_frame(rgbImage)
+                camera.schedule_frame(rgbImage)
 
-                # https://stackoverflow.com/a/55468544/6622587
                 h, w, ch = rgbImage.shape
                 bytesPerLine = ch * w
                 convertToQtFormat = QImage(
                     rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888
                 )
-                p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                p = convertToQtFormat.scaled(WIDTH, HEIGHT, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
 
 

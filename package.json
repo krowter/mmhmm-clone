@@ -1,17 +1,18 @@
 {
-  "name": "bodypix",
+  "name": "mmhmm-clone",
   "version": "0.0.1",
   "dependencies": {
     "@tensorflow-models/body-pix": "^2.0.5",
     "@tensorflow/tfjs-node": "^2.0.1",
     "@tensorflow/tfjs-node-gpu": "^1.7.1",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1"
   },
   "scripts": {
     "dev": "nodemon app.js"
   },
   "main": "app.js",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "devDependencies": {
     "nodemon": "^2.0.4"
   }

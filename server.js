@@ -1,9 +1,10 @@
+require("dotenv").config();
 // const tf = require("@tensorflow/tfjs-node");
 const tf = require("@tensorflow/tfjs-node-gpu");
 const bodyPix = require("@tensorflow-models/body-pix");
 const express = require("express");
 const app = express();
-const port = 9000;
+const port = process.env.PORT;
 
 (async () => {
   const net = await bodyPix.load({

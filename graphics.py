@@ -4,13 +4,24 @@ import requests
 import pyfakewebcam
 import numpy as np
 import copy
+from dotenv import load_dotenv
+load_dotenv()
 
 from PIL import ImageGrab
 
 from globals import WIDTH, HEIGHT
 
+PORT = os.getenv("PORT")
 
-def get_mask(frame, bodypix_url="http://localhost:9000/mask-frame"):
+# 
+# Source for get_mask, post_process_mask, and remove_background function
+# https://elder.dev/posts/open-source-virtual-background/
+# license: https://creativecommons.org/licenses/by/4.0/
+# changes made to original code:
+# - add conditionals based on states
+
+
+def get_mask(frame, bodypix_url=f"http://localhost:{PORT}/mask-frame"):
     _, data = cv2.imencode(".jpg", frame)
     r = requests.post(
         url=bodypix_url,
@@ -68,8 +79,6 @@ def remove_background(cap, background_scaled, frame, state):
         else background_scaled
     )
 
-    # fetch the mask with retries (the app needs to warmup and we're lazy)
-    # e v e n t u a l l y c o n s i s t e n t
     if not state["presenter_large"]:
         small_frame = cv2.resize(copy.deepcopy(frame), (320, 240))
         frame = np.ones((HEIGHT, WIDTH, 3), dtype="uint8")
